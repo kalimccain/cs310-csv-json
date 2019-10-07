@@ -3,6 +3,15 @@ package edu.jsu.mcis;
 import java.io.*;
 import java.util.*;
 import com.opencsv.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.simple.*;
 import org.json.simple.parser.*;
 
@@ -158,4 +167,102 @@ public class Converter {
         return results.trim();
         
     }
+    public static String getJSONArray(String jsonString){
+       Connection conn = null;
+       PreparedStatement pstSelect = null; pstUpdate = null;
+       ResultSet resultset = null;
+       ResultSetMetaData metadata= null;
+       JSONArray jsonArray;
+       
+       String query, key, value;
+       
+       boolean hasresults;
+       int resultCount, columnCount, updateCount = 0;
+       
+       try{
+           
+           String server = ("jdbc:mysql://localhost/p2_test");
+           String username = "root";
+           String password = "Roro91809";
+           System.out.println("Connecting to "+ server+ "...");
+           
+           Class.forName("com.mysql.jdbc.Driver").newInstance();
+           
+           conn = DriverManager.getConnection(server,username,password);
+           
+           if (conn.isValid(0)){
+               System.out.println("Connected Successfully");
+               
+               query = "INSERT INTO people (firstname, middleinitial,lastname,address, city, state, zip) "
+                       + "      VALUES (?, ?, ?, ?, ?, ?, ?)";
+               pstUpdate = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+               pstUpdate.setString(1, newFirstName);
+               pstUpdate.setString(2, newMiddleInitial);
+               pstUpdate.setString(3, newLastName);
+               pstUpdate.setString(4, newAddress);
+               pstUpdate.setString(5, newCity);
+               pstUpdate.setString(6, newState);
+               pstUpdate.setString(7, newZip);
+               
+               updateCount = pstUpdate.executeUpdate();
+               
+               if (updateCount>0){
+                   resultset = pstUpdate.getGeneratedKeys();
+                   
+                   if(resultset.next()){
+                       System.out.print("Update Successful! New Key: ");
+                       System.out.println(resultset.getInt(1));
+                   }
+               }
+               
+               query = "SELECT * FROM people";
+               pstSelect = conn.prepareStatement(query);
+               
+               System.out.println("Submitting Query ...");
+               
+               hasresults = pstSelect.execute();
+               
+               System.out.println("Getting Results ...");
+               
+               while (hasresults || pstSelect.getUpdateCount() != -1){
+                   if (hasresults){
+                       
+                       resultset = pstSelect.getResultSet();
+                       metadata = resultset.getMetaData();
+                       columnCount = metadata.getColumncount();
+                       
+                       for (int i=1; i<columnCount;++i){
+                           key = metadata.getColumnLabel(i);
+                           System.out.format("%20s", key);
+                       }
+                       
+                       while (resultset.next()){
+                           System.out.println();
+                           JSONObject jsonObject = new JSONObject();
+                           
+                           for (int i =0;i<=columnCount;i++){
+                               String columnNames = ();
+                           }
+                           value.add(jsonObject);
+                       }
+                   }
+                   
+                   else {
+                       resultCount = pstSelect.getUpdateCount();
+                       
+                       if (resultCount == -1){
+                           break;
+                       }
+                   }
+                   hasresults = pstSelect.getMoreResults();
+               }
+           }
+           conn.close();
+           return jsonArray;
+       } catch (SQLException ex) {
+            Logger.getLogger(Converter.class.getName()).log(Level.SEVERE, null, ex);
+        }
+       
+    }
+    
 }
